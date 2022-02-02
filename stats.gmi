@@ -1,0 +1,4 @@
+# This a page on anther path
+
+welcome
+
