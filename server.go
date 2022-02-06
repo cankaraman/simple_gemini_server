@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"crypto/tls"
+	"io"
 	"log"
 	"net"
 )
@@ -56,17 +57,17 @@ func handleResponse(req *Request, conn net.Conn) {
 	res := getResponse(req)
 
 	conn.Write([]byte(res.status + "\r\n"))
-	conn.Write(res.body)
+	io.Copy(conn, res.body)
 
 }
 
 func getResponse(req *Request) *Response {
-	rp := req.getRelativePath()
+	rp := req.GetRelativePath()
 
 	file, err := GetFile(rp)
 
 	if err != nil {
-		return NewResponse(NotFound, []byte("not found"))
+		return NewResponse(NotFound, nil)
 	}
 
 	return NewResponse(Success, file)

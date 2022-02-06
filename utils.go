@@ -13,7 +13,7 @@ const DefaultHome string = "index.gmi"
 
 type Response struct {
 	status string
-	body   []byte
+	body   *os.File
 }
 
 type Request struct {
@@ -21,10 +21,14 @@ type Request struct {
 }
 
 type GeminiUrlParser interface {
-	getRelativePath() string
+	GetRelativePath() string
 }
 
-func (r Request) getRelativePath() string {
+//clean url
+//accept input
+//getFlags
+//
+func (r Request) GetRelativePath() string {
 	url := strings.Replace(r.header, "\r\n", "", -1)
 	url = strings.Replace(url, "gemini://", "", -1)
 	url = strings.Replace(url, "/../", "/", -1)
@@ -38,15 +42,15 @@ func NewRequest(header string) *Request {
 	return &Request{header}
 }
 
-func NewResponse(status string, body []byte) *Response {
+func NewResponse(status string, body *os.File)*Response {
 	return &Response{status, body}
 }
 
-func GetFile(rp string) ([]byte, error){
+func GetFile(rp string) (*os.File, error){
 	//TODO return file pointer instead
 	if rp == "" {
-		return os.ReadFile("./"+DefaultHome)
+		return os.Open("./"+DefaultHome)
 	}
 
-	return os.ReadFile("./"+rp+".gmi")
+	return os.Open("./"+rp+".gmi")
 }
