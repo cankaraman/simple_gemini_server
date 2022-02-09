@@ -8,17 +8,17 @@ import (
 	"net"
 )
 
-func RunServer() {
+func RunServer(domain, port, crt, key string) {
 	log.SetFlags(log.Lshortfile)
 	//use example certs
-	cer, err := tls.LoadX509KeyPair("selfsigned.crt", "selfsigned.key")
+	cer, err := tls.LoadX509KeyPair(crt, key)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
 	config := &tls.Config{Certificates: []tls.Certificate{cer}}
-	ln, err := tls.Listen("tcp", ":1965", config)
+	ln, err := tls.Listen("tcp", domain+":"+port, config)
 	if err != nil {
 		log.Println(err)
 		return
@@ -56,7 +56,11 @@ func handleResponse(req *Request, conn net.Conn) {
 	defer conn.Close()
 	res := getResponse(req)
 
-	conn.Write([]byte(res.status + "\r\n"))
+	_, err := conn.Write([]byte(res.status + "\r\n"))
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	io.Copy(conn, res.body)
 
 }

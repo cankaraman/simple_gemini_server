@@ -24,9 +24,7 @@ type GeminiUrlParser interface {
 	GetRelativePath() string
 }
 
-//clean url
 //accept input
-//getFlags
 //
 func (r Request) GetRelativePath() string {
 	url := strings.Replace(r.header, "\r\n", "", -1)
@@ -42,15 +40,14 @@ func NewRequest(header string) *Request {
 	return &Request{header}
 }
 
-func NewResponse(status string, body *os.File)*Response {
+func NewResponse(status string, body *os.File) *Response {
 	return &Response{status, body}
 }
 
-func GetFile(rp string) (*os.File, error){
-	//TODO return file pointer instead
+func GetFile(rp string) (*os.File, error) {
 	if rp == "" {
-		return os.Open("./"+DefaultHome)
+		return os.Open("./" + DefaultHome)
 	}
 
-	return os.Open("./"+rp+".gmi")
+	return os.Open("./" + rp + ".gmi")
 }

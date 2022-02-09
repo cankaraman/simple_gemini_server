@@ -2,3 +2,4 @@
 
 welcome
 
+=> input/	Try entering an input
