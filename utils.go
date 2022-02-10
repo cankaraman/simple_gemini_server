@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -8,7 +10,9 @@ import (
 const Success string = "20"
 const TemporaryFailure string = "40"
 const PermanentFailure string = "50"
+
 const NotFound string = "51"
+const StatusBadRequest string = "59"
 const DefaultHome string = "index.gmi"
 
 type Response struct {
@@ -21,19 +25,23 @@ type Request struct {
 }
 
 type GeminiUrlParser interface {
-	GetRelativePath() string
+	GetRelativePath() (string, error)
 }
 
 //accept input
 //
-func (r Request) GetRelativePath() string {
-	url := strings.Replace(r.header, "\r\n", "", -1)
-	url = strings.Replace(url, "gemini://", "", -1)
-	url = strings.Replace(url, "/../", "/", -1)
-	if strings.Contains(url, "/") {
-		return strings.Trim(url[strings.IndexByte(url, '/'):], "/")
+func (r Request) GetRelativePath() (string, error) {
+	rawUrl := strings.Replace(r.header, "\r\n", "", -1)
+	parsed, err := url.Parse(rawUrl)
+	if err != nil {
+		return "", err
 	}
-	return ""
+
+	if parsed.Scheme != "" && parsed.Scheme != "gemini" {
+		return "", errors.New("unsoperted scheme")
+	}
+
+	return strings.Trim(parsed.Path, "/"), nil
 }
 
 func NewRequest(header string) *Request {

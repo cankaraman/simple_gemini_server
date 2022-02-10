@@ -66,7 +66,10 @@ func handleResponse(req *Request, conn net.Conn) {
 }
 
 func getResponse(req *Request) *Response {
-	rp := req.GetRelativePath()
+	rp, err := req.GetRelativePath()
+	if err != nil {
+		return NewResponse(StatusBadRequest, nil)
+	}
 
 	file, err := GetFile(rp)
 
