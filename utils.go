@@ -38,7 +38,7 @@ func (r Request) GetRelativePath() (string, error) {
 	}
 
 	if parsed.Scheme != "" && parsed.Scheme != "gemini" {
-		return "", errors.New("unsoperted scheme")
+		return "", errors.New("unsported scheme")
 	}
 
 	return strings.Trim(parsed.Path, "/"), nil
