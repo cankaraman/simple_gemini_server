@@ -15,6 +15,8 @@ const NotFound string = "51"
 const StatusBadRequest string = "59"
 const DefaultHome string = "index.gmi"
 
+// TODO implement  60 & 61 use cases
+
 type Response struct {
 	status string
 	body   *os.File
@@ -33,6 +35,7 @@ type GeminiUrlParser interface {
 func (r Request) GetRelativePath() (string, error) {
 	rawUrl := strings.Replace(r.header, "\r\n", "", -1)
 	parsed, err := url.Parse(rawUrl)
+	// TODO return error that correspons to a code
 	if err != nil {
 		return "", err
 	}

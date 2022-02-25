@@ -13,6 +13,9 @@ func main() {
 	RunServer(*domain, *port, *crtPath, *keyPath)
 
 
+	// meta field on response
+	// 1024 byte long request url. Read max until \r\n
+	// success meta is just content type
 }
 
 

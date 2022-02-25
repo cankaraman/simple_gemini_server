@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"crypto/tls"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -17,8 +18,10 @@ func RunServer(domain, port, crt, key string) {
 		return
 	}
 
-	config := &tls.Config{Certificates: []tls.Certificate{cer}}
+	config := &tls.Config{Certificates: []tls.Certificate{cer}, InsecureSkipVerify: true, ClientAuth: tls.RequestClientCert} // ClientAuth: tls.VerifyClientCertIfGiven,
+
 	ln, err := tls.Listen("tcp", domain+":"+port, config)
+
 	if err != nil {
 		log.Println(err)
 		return
@@ -26,7 +29,35 @@ func RunServer(domain, port, crt, key string) {
 	defer ln.Close()
 
 	for {
+		//var conn tls.Conn
+		//var err error
 		conn, err := ln.Accept()
+
+		if err != nil {
+
+			fmt.Println(err)
+		}
+		//tlsC tls.conn :=
+
+		tlsConn:= conn.(*tls.Conn)
+		tlsConn, ok := conn.(*tls.Conn)
+
+
+		fmt.Println(ok)
+		tlsState := tlsConn.ConnectionState()
+
+		fmt.Println(tlsState)
+		if tlsConn.ConnectionState().HandshakeComplete {
+			fmt.Println(tlsConn.RemoteAddr().String())
+		}
+
+		//var tConn tls.Conn  = tls.Conn(conn)
+
+		certs := tlsConn.ConnectionState().PeerCertificates
+		fmt.Println(certs)
+
+		//
+		//conn.ConnectionState()
 		if err != nil {
 			log.Println(err)
 			continue
@@ -37,6 +68,7 @@ func RunServer(domain, port, crt, key string) {
 }
 
 func handleConnection(conn net.Conn) {
+
 	r := bufio.NewReader(conn)
 	msg, err := r.ReadString('\n')
 	if err != nil {
@@ -52,6 +84,8 @@ func handleConnection(conn net.Conn) {
 }
 
 func handleResponse(req *Request, conn net.Conn) {
+	// TODO request for certicication
+	// TODO accept input
 
 	defer conn.Close()
 	res := getResponse(req)
