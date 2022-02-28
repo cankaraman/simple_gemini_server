@@ -1,16 +1,25 @@
 package main
 
-var Routes map[string]func() *Response = map[string]func() *Response{
-	"/other": Other,
+import (
+	"github.com/cankaraman/gemini_server/status"
+)
+
+var Routes map[string]func(*Request) *Response = map[string]func(*Request) *Response{
+	"other": Other,
+	"other/input": OtherInput,
 }
 
-func Other() *Response {
+func Other(req *Request) *Response {
 	f, err := GetFile("other.gmi")
 
 	if err != nil {
-		return NewResponse(NotFound, nil)
+		return NewResponse(status.NotFound, nil)
 	}
 
-	return NewResponse(Success, f)
+	return NewResponse(status.Success, f)
 
+}
+
+func OtherInput(req *Request) *Response {
+	return NewResponse(status.Input, nil)
 }

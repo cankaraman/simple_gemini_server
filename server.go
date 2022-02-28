@@ -108,7 +108,7 @@ func getResponse(req *Request) *Response {
 	}
 
 	if Routes[rp] != nil{
-		return Routes[rp]()
+		return Routes[rp](req)
 	}
 
 	file, err := GetFile(rp)

@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+//TODO use status package instead
 const Success string = "20"
 const TemporaryFailure string = "40"
 const PermanentFailure string = "50"
@@ -25,6 +26,7 @@ type Response struct {
 }
 
 type Request struct {
+	//TODO expand request with query, url, rawUrl
 	header string
 	certs []*x509.Certificate
 	
