@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/x509"
 	"errors"
 	"net/url"
 	"os"
@@ -19,11 +20,14 @@ const DefaultHome string = "index.gmi"
 
 type Response struct {
 	status string
+	meta string
 	body   *os.File
 }
 
 type Request struct {
 	header string
+	certs []*x509.Certificate
+	
 }
 
 type GeminiUrlParser interface {
@@ -47,12 +51,12 @@ func (r Request) GetRelativePath() (string, error) {
 	return strings.Trim(parsed.Path, "/"), nil
 }
 
-func NewRequest(header string) *Request {
-	return &Request{header}
+func NewRequest(header string, 	certs []*x509.Certificate) *Request {
+	return &Request{header, certs}
 }
 
 func NewResponse(status string, body *os.File) *Response {
-	return &Response{status, body}
+	return &Response{status, "", body}
 }
 
 func GetFile(rp string) (*os.File, error) {

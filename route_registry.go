@@ -1,10 +1,16 @@
 package main
 
-var routes map[string]func() *Response = map[string]func() *Response{
-	"/": Home,
+var Routes map[string]func() *Response = map[string]func() *Response{
+	"/other": Other,
 }
 
-func Home() *Response{
-	return NewResponse(Success, nil)
+func Other() *Response {
+	f, err := GetFile("other.gmi")
+
+	if err != nil {
+		return NewResponse(NotFound, nil)
+	}
+
+	return NewResponse(Success, f)
 
 }
