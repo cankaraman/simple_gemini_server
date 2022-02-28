@@ -1,8 +1,9 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"log"
@@ -29,58 +30,55 @@ func RunServer(domain, port, crt, key string) {
 	defer ln.Close()
 
 	for {
-		//var conn tls.Conn
-		//var err error
 		conn, err := ln.Accept()
 
 		if err != nil {
-
-			fmt.Println(err)
+			log.Println(err)
+			break
 		}
-		//tlsC tls.conn :=
 
-		tlsConn:= conn.(*tls.Conn)
 		tlsConn, ok := conn.(*tls.Conn)
+		if !ok {
+			break
+		}
 
-
-		fmt.Println(ok)
+		tlsConn.Handshake()
 		tlsState := tlsConn.ConnectionState()
 
-		fmt.Println(tlsState)
-		if tlsConn.ConnectionState().HandshakeComplete {
-			fmt.Println(tlsConn.RemoteAddr().String())
-		}
-
-		//var tConn tls.Conn  = tls.Conn(conn)
-
-		certs := tlsConn.ConnectionState().PeerCertificates
+		certs := tlsState.PeerCertificates
 		fmt.Println(certs)
 
-		//
-		//conn.ConnectionState()
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-		go handleConnection(conn)
+		go handleConnection(conn, certs)
 	}
 
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, certs []*x509.Certificate) {
+	// gemini request are at most 1024 bytes
+	buf := make([]byte, 1024)
 
-	r := bufio.NewReader(conn)
-	msg, err := r.ReadString('\n')
+	_, err := conn.Read(buf)
 	if err != nil {
 		log.Println(err)
+		handleBadRequest(conn)
 		return
 	}
 
-	req := NewRequest(msg)
-
+	rawRequest := string(bytes.Trim(buf, "\x00"))
+	
+	log.Println(rawRequest)
+	req := NewRequest(rawRequest, certs)
 	handleResponse(req, conn)
+}
 
-	log.Println(msg)
+func handleBadRequest(conn net.Conn) {
+
+	res := NewResponse(StatusBadRequest, nil)
+	sendResponse(res, conn)
 }
 
 func handleResponse(req *Request, conn net.Conn) {
@@ -90,19 +88,27 @@ func handleResponse(req *Request, conn net.Conn) {
 	defer conn.Close()
 	res := getResponse(req)
 
+	sendResponse(res, conn)
+
+}
+
+func sendResponse(res *Response, conn net.Conn) {
 	_, err := conn.Write([]byte(res.status + "\r\n"))
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	io.Copy(conn, res.body)
-
 }
 
 func getResponse(req *Request) *Response {
 	rp, err := req.GetRelativePath()
 	if err != nil {
 		return NewResponse(StatusBadRequest, nil)
+	}
+
+	if Routes[rp] != nil{
+		return Routes[rp]()
 	}
 
 	file, err := GetFile(rp)
