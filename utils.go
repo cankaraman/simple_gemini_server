@@ -8,28 +8,18 @@ import (
 	"strings"
 )
 
-//TODO use status package instead
-const Success string = "20"
-const TemporaryFailure string = "40"
-const PermanentFailure string = "50"
-
-const NotFound string = "51"
-const StatusBadRequest string = "59"
 const DefaultHome string = "index.gmi"
-
-// TODO implement  60 & 61 use cases
 
 type Response struct {
 	status string
-	meta string
+	meta   string
 	body   *os.File
 }
 
 type Request struct {
-	//TODO expand request with query, url, rawUrl
-	header string
-	certs []*x509.Certificate
-	
+	header, rawUrl string
+	url            *url.URL
+	certs          []*x509.Certificate
 }
 
 type GeminiUrlParser interface {
@@ -39,22 +29,22 @@ type GeminiUrlParser interface {
 //accept input
 //
 func (r Request) GetRelativePath() (string, error) {
-	rawUrl := strings.Replace(r.header, "\r\n", "", -1)
+
+	return strings.Trim(r.url.Path, "/"), nil
+}
+
+func NewRequest(header string, certs []*x509.Certificate) (*Request, error) {
+	rawUrl := strings.Replace(header, "\r\n", "", -1)
 	parsed, err := url.Parse(rawUrl)
-	// TODO return error that correspons to a code
+	// 2. TODO return error that correspons to a code
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if parsed.Scheme != "" && parsed.Scheme != "gemini" {
-		return "", errors.New("unsported scheme")
+		return nil, errors.New("unsported scheme")
 	}
-
-	return strings.Trim(parsed.Path, "/"), nil
-}
-
-func NewRequest(header string, 	certs []*x509.Certificate) *Request {
-	return &Request{header, certs}
+	return &Request{header, rawUrl, parsed, certs}, nil
 }
 
 func NewResponse(status string, body *os.File) *Response {

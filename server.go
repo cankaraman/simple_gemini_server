@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"net"
+
+	"github.com/cankaraman/gemini_server/status"
 )
 
 func RunServer(domain, port, crt, key string) {
@@ -19,7 +21,8 @@ func RunServer(domain, port, crt, key string) {
 		return
 	}
 
-	config := &tls.Config{Certificates: []tls.Certificate{cer}, InsecureSkipVerify: true, ClientAuth: tls.RequestClientCert} // ClientAuth: tls.VerifyClientCertIfGiven,
+	config := &tls.Config{Certificates: []tls.Certificate{cer}, 
+	InsecureSkipVerify: true, ClientAuth: tls.RequestClientCert} // ClientAuth: tls.VerifyClientCertIfGiven,
 
 	ln, err := tls.Listen("tcp", domain+":"+port, config)
 
@@ -69,27 +72,29 @@ func handleConnection(conn net.Conn, certs []*x509.Certificate) {
 	}
 
 	rawRequest := string(bytes.Trim(buf, "\x00"))
-	
 	log.Println(rawRequest)
-	req := NewRequest(rawRequest, certs)
+
+	req, err := NewRequest(rawRequest, certs)
+	if err != nil {
+		log.Println(err)
+		handleBadRequest(conn)
+		return
+	}
+
 	handleResponse(req, conn)
 }
 
 func handleBadRequest(conn net.Conn) {
 
-	res := NewResponse(StatusBadRequest, nil)
+	res := NewResponse(status.BadRequest, nil)
 	sendResponse(res, conn)
 }
 
 func handleResponse(req *Request, conn net.Conn) {
-	// TODO request for certicication
-	// TODO accept input
-
 	defer conn.Close()
 	res := getResponse(req)
 
 	sendResponse(res, conn)
-
 }
 
 func sendResponse(res *Response, conn net.Conn) {
@@ -104,18 +109,18 @@ func sendResponse(res *Response, conn net.Conn) {
 func getResponse(req *Request) *Response {
 	rp, err := req.GetRelativePath()
 	if err != nil {
-		return NewResponse(StatusBadRequest, nil)
+		return NewResponse(status.BadRequest, nil)
 	}
 
-	if Routes[rp] != nil{
+	if Routes[rp] != nil {
 		return Routes[rp](req)
 	}
 
 	file, err := GetFile(rp)
 
 	if err != nil {
-		return NewResponse(NotFound, nil)
+		return NewResponse(status.NotFound, nil)
 	}
 
-	return NewResponse(Success, file)
+	return NewResponse(status.Success, file)
 }
